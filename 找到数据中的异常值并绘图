@@ -1,0 +1,54 @@
+def find_outliers(model,X,y,sigma=3):
+    #预测y值
+    try:
+        y_pred = pd.Series(model.predict(X), index=y.index)
+    #预测失败 先拟合
+    except:
+        model.fit(X,y)
+        y_pred = pd.Series(model.predict(X), index=y.index)
+    #计算残差
+    # e = y-ypred
+    resid = y-y_pred
+    mean_resid = resid.mean()
+    std_resid = resid.std()
+    
+    #计算 z 统计量 当|z|大于sigma就是异常值
+    z = (resid-mean_resid)/std_resid
+    outliers = z[abs(z)>sigma].index
+    
+    #打印和画出结果
+    print("R2=",model.score(X,y))
+    print('mse=',mean_squared_error(y,y_pred))
+    print("----------------------------------")
+    
+    print("残差的均值:",mean_resid)
+    print("残差的标准差:",std_resid)
+    print("----------------------------------")
+    
+    print(len(outliers),'outlier')
+    print(outliers.tolist())
+    
+    plt.figure(figsize=(15,5))
+    ax_131 = plt.subplot(1,3,1)
+    plt.plot(y,y_pred,".")
+    plt.plot(y.loc[outliers],y_pred.loc[outliers],'ro')
+    plt.legend("Accepted",'Outlier')
+    plt.xlabel("y")
+    plt.ylabel("y_pred")
+    
+    ax_132 = plt.subplot(1,3,2)
+    plt.plot(y,y-y_pred,'.')
+    plt.plot(y.loc[outliers],y.loc[outliers]-y_pred[outliers],'ro')
+    plt.legend("Accepted",'Outlier')
+    plt.xlabel("y")
+    plt.ylabel("y-y_pred")
+    
+    ax_l33=plt.subplot(1,3,3)
+    z.plot.hist(bins = 50,ax=ax_l33)
+    z.loc[outliers].plot.hist(color="r",bins=50,ax=ax_l33)
+    plt.legend("Accepted","Outlier")
+    plt.xlabel("z")
+    plt.savefig("outliers.png")
+    
+    return outliers
+    
